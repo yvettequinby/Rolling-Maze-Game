@@ -3,6 +3,7 @@ package com.rekloosive.ballroll.screens;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.Input.Peripheral;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -24,6 +25,7 @@ public class TestScreen extends InputAdapter implements Screen {
 	private Viewport viewport;
 	private SpriteBatch batch;
 	private BitmapFont font;
+	private boolean useAccelerometer = false;
 	
 	
 	public TestScreen() {
@@ -35,6 +37,7 @@ public class TestScreen extends InputAdapter implements Screen {
 		
 		font = new BitmapFont(Gdx.files.internal("impact.fnt"));
 		font.setColor(Color.WHITE);
+		this.useAccelerometer = Gdx.input.isPeripheralAvailable(Peripheral.Accelerometer);
 	}
 	
 
@@ -49,11 +52,17 @@ public class TestScreen extends InputAdapter implements Screen {
 		Gdx.gl.glClearColor(0.6f, 0.6f, 0.6f, 1.0f);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		
+		float xacc = Gdx.input.getAccelerometerX();
+		float yacc = Gdx.input.getAccelerometerY();
+		float zacc = Gdx.input.getAccelerometerZ();
+		
 		batch.setProjectionMatrix(camera.combined);
 		
 		batch.begin();
 		font.setColor(Color.WHITE);
-		font.draw(batch, "This is a one line string", 0.0f, 50.0f);
+		//font.draw(batch, Float.toString(xacc), 0.0f, 50.0f);
+		font.draw(batch, Float.toString(yacc), 0.0f, 150.0f);
+		//font.draw(batch, Float.toString(zacc), 0.0f, 250.0f);
 		
 		batch.end();
 	}

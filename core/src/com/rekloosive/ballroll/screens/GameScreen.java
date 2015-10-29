@@ -5,11 +5,14 @@ import java.util.List;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.Input.Peripheral;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.MathUtils;
@@ -20,7 +23,12 @@ import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.physics.box2d.CircleShape;
+import com.badlogic.gdx.physics.box2d.Contact;
+import com.badlogic.gdx.physics.box2d.ContactImpulse;
+import com.badlogic.gdx.physics.box2d.ContactListener;
+import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
+import com.badlogic.gdx.physics.box2d.Manifold;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.utils.Align;
@@ -29,7 +37,7 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import com.rekloosive.ballroll.BallRoll;
 import com.rekloosive.ballroll.utils.Constants;
 
-public class GameScreen extends InputAdapter implements Screen {
+public class GameScreen extends InputAdapter implements Screen, ContactListener {
 
 	private BallRoll game;
 
@@ -39,6 +47,9 @@ public class GameScreen extends InputAdapter implements Screen {
 	private Viewport viewport;
 	private Vector3 point = new Vector3();
 	private SpriteBatch batch;
+	private Texture levelTexture;
+	private Texture ballTexture;
+	private Sound bounce;
 
 	// General Box2D
 	private Box2DDebugRenderer debugRenderer;
@@ -57,6 +68,7 @@ public class GameScreen extends InputAdapter implements Screen {
 	private float VIRTUAL_WIDTH = Constants.SCENE_WIDTH * Constants.SCREEN_TO_WORLD;
 	private float VIRTUAL_HEIGHT = Constants.SCENE_HEIGHT * Constants.SCREEN_TO_WORLD;
 
+	private boolean useAccelerometer = false;
 	private boolean gameOver = false;
 	private BitmapFont font;
 	private float gameTimeElapsed = 0f;
@@ -65,12 +77,17 @@ public class GameScreen extends InputAdapter implements Screen {
 	public GameScreen(BallRoll game) {
 
 		this.game = game;
+		this.useAccelerometer = Gdx.input.isPeripheralAvailable(Peripheral.Accelerometer);
 		createFloorConfigs();
 
 		viewport = new FitViewport(Constants.SCENE_WIDTH, Constants.SCENE_HEIGHT);
 		viewport.getCamera().position.set(viewport.getCamera().position.x + Constants.SCENE_WIDTH * 0.5f, viewport.getCamera().position.y + Constants.SCENE_HEIGHT * 0.5f, 0);
 		viewport.getCamera().update();
-
+		
+		levelTexture = new Texture(Gdx.files.internal(Constants.LEVEL_IMAGE_PATH));
+		ballTexture = new Texture(Gdx.files.internal(Constants.BALL_IMAGE_PATH));
+		bounce = Gdx.audio.newSound(Gdx.files.internal(Constants.BALL_SOUND_PATH));
+		
 		fontCamera = new OrthographicCamera();
 		fontCamera.position.set(VIRTUAL_WIDTH * 0.5f, VIRTUAL_HEIGHT * 0.5f, 0.0f);
 		fontViewport = new FitViewport(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, fontCamera);
@@ -101,38 +118,45 @@ public class GameScreen extends InputAdapter implements Screen {
 		circle.setRadius(Constants.BALL_RADIUS);
 		FixtureDef circleFixtureDef = new FixtureDef();
 		circleFixtureDef.shape = circle;
-		circleFixtureDef.density = 0.5f;
-		circleFixtureDef.friction = 0.6f;
-		circleFixtureDef.restitution = 0.5f;
+		circleFixtureDef.density = 0.7f;
+		circleFixtureDef.friction = 0.4f;
+		circleFixtureDef.restitution = 0.4f;
 		defaultDynamicBodyDef.position.set(Constants.SCENE_WIDTH * 0.5f, Constants.SCENE_HEIGHT);
 		ball = world.createBody(defaultDynamicBodyDef);
 		ball.createFixture(circleFixtureDef);
-		ball.applyLinearImpulse(new Vector2(0.1f, 0f), ball.getPosition(), true);
-
+		
+		if(!useAccelerometer) {
+			ball.applyLinearImpulse(new Vector2(0.1f, 0f), ball.getPosition(), true);
+		}
+		
+		world.setContactListener(this);
+		
 	}
 
 	@Override
 	public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-		if (button == Input.Buttons.LEFT && !gameOver) {
-			viewport.getCamera().unproject(point.set(screenX, screenY, 0));
-			if (point.x < ball.getPosition().x) {
-				ball.applyLinearImpulse(new Vector2(0.2f, 0f), ball.getPosition(), true);
-			} else {
-				ball.applyLinearImpulse(new Vector2(-0.2f, 0f), ball.getPosition(), true);
+		if(!Gdx.input.isPeripheralAvailable(Peripheral.Accelerometer)) {
+			if (button == Input.Buttons.LEFT && !gameOver) {
+				viewport.getCamera().unproject(point.set(screenX, screenY, 0));
+				if (point.x < ball.getPosition().x) {
+					ball.applyLinearImpulse(new Vector2(0.2f, 0f), ball.getPosition(), true);
+				} else {
+					ball.applyLinearImpulse(new Vector2(-0.2f, 0f), ball.getPosition(), true);
+				}
+				return true;
 			}
-			return true;
 		}
 		return false;
 	}
 
+	
 	public BallRoll getGame() {
 		return game;
 	}
 
 	@Override
 	public void show() {
-		// TODO Auto-generated method stub
-
+		bounce.play();
 	}
 
 	@Override
@@ -171,22 +195,61 @@ public class GameScreen extends InputAdapter implements Screen {
 
 		float angle = 0.05f;
 		for (Body body : groundBodies) {
+			
+			float bodyWidth = (Float)body.getUserData();
+			float xPos = body.getPosition().x - bodyWidth*0.5f;
+			float yPos = body.getPosition().y - Constants.GROUND_HEIGHT*0.5f;
+			batch.setProjectionMatrix(viewport.getCamera().combined);
+			batch.begin();
+			batch.draw(levelTexture, 
+					xPos, yPos,  
+					bodyWidth*0.5f, Constants.GROUND_HEIGHT*0.5f, 
+					bodyWidth, Constants.GROUND_HEIGHT,  
+					1f, 1f, 
+					(float) Math.toDegrees(body.getAngle()), 
+					0,0, 
+					levelTexture.getWidth(), levelTexture.getHeight(),
+					false,false);
+			batch.end();
+			 
 			if (gameOver) {
 				angle = angle * -1f;
 				body.setType(BodyType.DynamicBody);
 				body.applyAngularImpulse(angle, true);
 				body.setGravityScale(1f);
 			} else {
-				float newVelocity = 0.5f + gameTimeElapsed/100f;
+				float newVelocity = 0.4f + gameTimeElapsed/100f;
 				body.setLinearVelocity(0f, newVelocity);
 			}
 		}
+		
+		float bodyWidth = Constants.BALL_RADIUS*2f;
+		float xPos = ball.getPosition().x - Constants.BALL_RADIUS;
+		float yPos = ball.getPosition().y - Constants.BALL_RADIUS;
+		batch.setProjectionMatrix(viewport.getCamera().combined);
+		batch.begin();
+		batch.draw(ballTexture, 
+				xPos, yPos,  
+				Constants.BALL_RADIUS, Constants.BALL_RADIUS, 
+				bodyWidth, bodyWidth,  
+				1f, 1f, 
+				(float) Math.toDegrees(ball.getAngle()), 
+				0,0, 
+				ballTexture.getWidth(), ballTexture.getHeight(),
+				false,false);
+		batch.end();
 
 		freeLevels();
+		
+		if(useAccelerometer) {
+			float yacc = Gdx.input.getAccelerometerY();
+			ball.setLinearVelocity(yacc*0.7f, ball.getLinearVelocity().y);
+		}
 
-		debugRenderer.render(world, viewport.getCamera().combined);
+		//debugRenderer.render(world, viewport.getCamera().combined);
 
 	}
+	
 
 	@Override
 	public void resize(int width, int height) {
@@ -214,6 +277,9 @@ public class GameScreen extends InputAdapter implements Screen {
 
 	@Override
 	public void dispose() {
+		bounce.dispose();
+		ballTexture.dispose();
+		levelTexture.dispose();
 		debugRenderer.dispose();
 		batch.dispose();
 		circle.dispose();
@@ -328,6 +394,7 @@ public class GameScreen extends InputAdapter implements Screen {
 			Body groundBody = world.createBody(groundBodyDef);
 			groundBody.setGravityScale(0f);
 			groundBody.createFixture(groundBoxFixtureDef);
+			groundBody.setUserData(floorWidth);
 
 			groundBox.dispose();
 			groundBodies.add(groundBody);
@@ -381,6 +448,35 @@ public class GameScreen extends InputAdapter implements Screen {
 				(ball.getPosition().x + Constants.BALL_RADIUS) < 0) { // Left limit
 			gameOver = true;
 		}
+	}
+
+	@Override
+	public void beginContact(Contact contact) {
+		Fixture fixtureA = contact.getFixtureA();
+		Fixture fixtureB = contact.getFixtureB();
+		Body bodyA = fixtureA.getBody();
+		Body bodyB = fixtureB.getBody();
+		if(ball.equals(bodyA) || ball.equals(bodyB)) {
+			bounce.play(0.25f);
+		}
+	}
+
+	@Override
+	public void endContact(Contact contact) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void preSolve(Contact contact, Manifold oldManifold) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void postSolve(Contact contact, ContactImpulse impulse) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

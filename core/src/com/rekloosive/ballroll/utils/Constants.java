@@ -3,6 +3,9 @@ package com.rekloosive.ballroll.utils;
 public class Constants {
 	
 	public static final String SPLASH_IMAGE_PATH = "splash.png"; 
+	public static final String LEVEL_IMAGE_PATH = "level.png";
+	public static final String BALL_IMAGE_PATH = "ball.png";
+	public static final String BALL_SOUND_PATH = "bounce.mp3";
 	
 	public static final float SCENE_WIDTH = 12.8f; 
 	public static final float SCENE_HEIGHT = 7.2f; 
