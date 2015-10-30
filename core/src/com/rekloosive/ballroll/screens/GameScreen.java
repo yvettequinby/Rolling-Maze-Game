@@ -49,6 +49,7 @@ public class GameScreen extends InputAdapter implements Screen, ContactListener 
 	private SpriteBatch batch;
 	private Texture levelTexture;
 	private Texture ballTexture;
+	private Texture backgroundTexture;
 	private Sound bounce;
 
 	// General Box2D
@@ -87,13 +88,14 @@ public class GameScreen extends InputAdapter implements Screen, ContactListener 
 		levelTexture = new Texture(Gdx.files.internal(Constants.LEVEL_IMAGE_PATH));
 		ballTexture = new Texture(Gdx.files.internal(Constants.BALL_IMAGE_PATH));
 		bounce = Gdx.audio.newSound(Gdx.files.internal(Constants.BALL_SOUND_PATH));
+		backgroundTexture = new Texture(Gdx.files.internal(Constants.BACKGROUND_IMAGE_PATH));
 		
 		fontCamera = new OrthographicCamera();
 		fontCamera.position.set(VIRTUAL_WIDTH * 0.5f, VIRTUAL_HEIGHT * 0.5f, 0.0f);
 		fontViewport = new FitViewport(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, fontCamera);
 
 		batch = new SpriteBatch();
-		font = new BitmapFont(Gdx.files.internal("impact.fnt"));
+		font = new BitmapFont(Gdx.files.internal(Constants.FONT_PATH));
 
 		Gdx.input.setInputProcessor(this);
 
@@ -167,6 +169,11 @@ public class GameScreen extends InputAdapter implements Screen, ContactListener 
 		Gdx.gl.glClearColor(Color.WHITE.r, Color.WHITE.g, Color.WHITE.b, Color.WHITE.a);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		
+		batch.setProjectionMatrix(fontViewport.getCamera().combined);
+		batch.begin();
+		batch.draw(backgroundTexture, 0f, 0f);
+		batch.end();
+		
 		if (gameOver) {
 			gameOverTimeElapsed = gameOverTimeElapsed + delta;
 			batch.setProjectionMatrix(fontViewport.getCamera().combined);
@@ -183,7 +190,6 @@ public class GameScreen extends InputAdapter implements Screen, ContactListener 
 			batch.setProjectionMatrix(fontViewport.getCamera().combined);
 			batch.begin();
 			font.setColor(Color.BLACK.r, Color.BLACK.g, Color.BLACK.b, 0.3f);
-			font.getData().setScale(1.5f);
 			font.draw(batch, Integer.toString(Math.round(gameTimeElapsed * 10f)), 50f, VIRTUAL_HEIGHT - 25f);
 			batch.end();
 		}
@@ -238,7 +244,7 @@ public class GameScreen extends InputAdapter implements Screen, ContactListener 
 				ballTexture.getWidth(), ballTexture.getHeight(),
 				false,false);
 		batch.end();
-
+		
 		freeLevels();
 		
 		if(useAccelerometer) {
@@ -278,6 +284,7 @@ public class GameScreen extends InputAdapter implements Screen, ContactListener 
 
 	@Override
 	public void dispose() {
+		backgroundTexture.dispose();
 		bounce.dispose();
 		ballTexture.dispose();
 		levelTexture.dispose();
