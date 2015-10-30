@@ -243,7 +243,8 @@ public class GameScreen extends InputAdapter implements Screen, ContactListener 
 		
 		if(useAccelerometer) {
 			float yacc = Gdx.input.getAccelerometerY();
-			ball.setLinearVelocity(yacc*0.7f, ball.getLinearVelocity().y);
+			float ballVelocity = yacc * (1f + gameTimeElapsed/100f);
+			ball.setLinearVelocity(ballVelocity, ball.getLinearVelocity().y);
 		}
 
 		//debugRenderer.render(world, viewport.getCamera().combined);
