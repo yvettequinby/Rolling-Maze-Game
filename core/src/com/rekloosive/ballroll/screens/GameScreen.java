@@ -171,7 +171,7 @@ public class GameScreen extends InputAdapter implements Screen, ContactListener 
 		
 		batch.setProjectionMatrix(fontViewport.getCamera().combined);
 		batch.begin();
-		batch.draw(backgroundTexture, 0f, 0f);
+		batch.draw(backgroundTexture, 0f, 0f, Constants.SCENE_WIDTH*Constants.SCREEN_TO_WORLD, Constants.SCENE_HEIGHT*Constants.SCREEN_TO_WORLD+100f);
 		batch.end();
 		
 		if (gameOver) {
@@ -451,7 +451,7 @@ public class GameScreen extends InputAdapter implements Screen, ContactListener 
 
 	private void checkGameOver() {
 		if (((ball.getPosition().y - Constants.BALL_RADIUS) > Constants.SCENE_HEIGHT) || // Top limit
-				(ball.getPosition().y + Constants.BALL_RADIUS) < 1.0f || // Bottom limit
+				(ball.getPosition().y + Constants.BALL_RADIUS*2f) < 1.0f || // Bottom limit
 				(ball.getPosition().x - Constants.BALL_RADIUS) > Constants.SCENE_WIDTH || // Right limit
 				(ball.getPosition().x + Constants.BALL_RADIUS) < 0) { // Left limit
 			gameOver = true;

@@ -7,7 +7,7 @@ public class Constants {
 	public static final String BALL_IMAGE_PATH = "ball.png";
 	public static final String BALL_SOUND_PATH = "bounce.mp3";
 	public static final String BACKGROUND_IMAGE_PATH = "rolling-ball-background.png";
-	public static final String FONT_PATH = "arial.fnt"; 
+	public static final String FONT_PATH = "narkisim.fnt"; 
 	
 	public static final float SCENE_WIDTH = 12.8f; 
 	public static final float SCENE_HEIGHT = 7.2f; 
